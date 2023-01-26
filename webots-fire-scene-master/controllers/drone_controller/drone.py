@@ -1,10 +1,4 @@
-#!/usr/bin/env python3
-# -*- coding: utf-8 -*-
-"""
-Created on Wed May 27 08:49:45 2020
 
-@author: Angel Ayala <angel4ayala [at] gmail.com>
-"""
 
 import numpy as np
 from simple_pid import PID
