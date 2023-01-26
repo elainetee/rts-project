@@ -531,7 +531,7 @@ if __name__ == '__main__':
                 lower = np.array(lower,dtype="uint8")
                 upper = np.array(upper,dtype="uint8")
                 mask = cv2.inRange(hsv, lower, upper)
-               # output = cv2.bitwise_and(image,hsv,mask=mask)
+                output = cv2.bitwise_and(image,hsv,mask=mask)
                 no_red = cv2.countNonZero(mask)
                 if int(no_red) >1000:
                     print("Fire detected")
@@ -559,10 +559,7 @@ if __name__ == '__main__':
                     altitude = controller.limits[0][3]  # * 0.1
                 elif key == ord('W'):
                     altitude = controller.limits[1][3]  # * 0.1
-                elif key == ord('Z'):
-                    print("Smoke detected")
-                elif key == ord('X'):
-                    print("Fire detected")
+               
                 # quit
                 elif key == ord('Q'):
                     print('Terminated')
