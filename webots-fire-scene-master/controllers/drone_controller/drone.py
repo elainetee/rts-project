@@ -5,10 +5,6 @@ from simple_pid import PID
 
 
 def pi_clip(angle):
-    """Ensure the angle will be in a [-pi, pi] loop.
-
-    :param float angle: The angle in radians to clip.
-    """
     if angle > 0:
         if angle > np.pi:
             return angle - 2 * np.pi
@@ -19,20 +15,6 @@ def pi_clip(angle):
 
 
 class Drone:
-    """The Drone class manage each sensor and actuators of the drone.
-     
-    It is developed for the Mavic 2 Pro drone, it consists of GPS, IMU, Gyro, 
-    Compass, Camera, LED and Motor nodes.
-    This drone control unit is designed to stabilize the drone through 4 PID 
-    controllers tunned for a 8ms simulation timestep, and the drone's gimbal 
-    with a Damping node in the WorldInfo node with values of 0.5 for both 
-    angular and linear fields.
-    
-    :param integer timestep: The simulation timestep, 8ms mus be setted, 
-        unexpected behaviour can occur with a different value.
-    :param string name: A name for the controller, just for debug purpose.
-    :param float start_alt: The initial altitude to be reached.
-    """
 
     def __init__(self, name='Mavic', start_alt=1., start_yaw=np.pi):
         # Time helpers
@@ -45,12 +27,6 @@ class Drone:
         self.lift_thrust = 68.5  # with this thrust, the drone lifts.
 
     def init_sensors(self, drone, timestep):
-        """Initialize each sensor distance of the Mavic 2 Pro.
-
-        :param drone Robot: The instantiated Robot Node class.
-        :param integer timestep: The simulation timestep, 8ms mus be setted,
-            unexpected behaviour can occur with a different value.
-        """
         self.sensors_id = ['front left', 'front right',
                            'rear top', 'rear bottom',
                            'left side', 'right side',
@@ -67,15 +43,6 @@ class Drone:
         return True
 
     def init_devices(self, drone, timestep):
-        """Initialize each device of the Mavic 2 Pro, in a desired timestep.
-
-        In this project the Compass node is not used.
-        The camera node is initialized at 33ms timestep to reach ~30fps.
-
-        :param drone Robot: The instantiated Robot Node class.
-        :param integer timestep: The simulation timestep, 8ms mus be setted,
-            unexpected behaviour can occur with a different value.
-        """
         # time
         self.deltaT = timestep / 1000.
         # Drone's Odometry
@@ -117,7 +84,6 @@ class Drone:
         return True
 
     def init_motors(self):
-        """Initialize the Motor nodes and the PID controllers."""
         # self.maxVelocity = 576# -> 5 m/s
         # self.maxTorque = 30
 
@@ -171,18 +137,15 @@ class Drone:
         return True
 
     def blink_leds(self):
-        """Blink the LED nodes."""
         led_state = int(self.time_counter) % 2
         self.leds[0].set(led_state)
         self.leds[1].set(int(not(led_state)))
 
     def gimbal_stabilize(self, acceleration):
-        """Stabilize camera (gimbal)."""
         self.camera_roll.setPosition(-0.115 * acceleration[0])
         self.camera_pitch.setPosition(-0.1 * acceleration[1])
 
     def get_odometry(self):
-        """Get the drone's current acceleration, angles and position."""
         acceleration = self.gyro.getValues()
         angles = self.imu.getRollPitchYaw()
         position = self.gps.getValues()
@@ -197,37 +160,17 @@ class Drone:
         return acceleration, angles, position, north_deg
 
     def get_image(self):
-        """Get the Camera node image with size and channels.
-
-        :return the data buffer with BGRA values
-        """
         return self.camera.getImage()
 
     def get_sensors_info(self):
-        """Get the Distance sensors Nodes' info."""
         return [0 if np.isnan(s.getValue()) else int(s.getValue())
                 for s in self.sensors]
 
     def get_camera_metadata(self):
-        """Get the camera image dimension and channels."""
         return self.camera.getHeight(), self.camera.getWidth(), 4  # channels
 
     def control(self, phi=0., theta=0., psi=0., thrust=0.):
-        """Control the drone's motor for a given angles and thrust.
-
-        In order to reach the desired angles and altitude, the drone must vary
-        the velocity of each motor. In order to achieve this the arguments
-        passed are used as setpoint for each PID controller, for the case of
-        the altitude and yaw angle, a target value is used and is update by the
-        amount of the argument value. If no value is passed the drone will hold
-        its posision.
-
-        :param float phi: The phi angle for the roll setpoint.
-        :param float theta: The theta angle for the pitch setpoint.
-        :param float psi: The psi variation value for the target angle of yaw.
-        :param float thrust: The thrust variation value for the target of the
-            altitude.
-        """
+        
         # compute current state
         acceleration, angles, position, _ = self.get_odometry()
         roll_angle = angles[0] + self.roll_correction
