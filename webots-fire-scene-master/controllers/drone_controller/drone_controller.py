@@ -1,10 +1,3 @@
-#!/usr/bin/env python3
-# -*- coding: utf-8 -*-
-"""
-Created on Wed Apr 29 23:16:03 2020
-
-@author: Angel Ayala <angel4ayala [at] gmail.com>
-"""
 
 import struct
 from controller import Robot
@@ -13,12 +6,7 @@ from drone import Drone
 
 # Drone Robot
 class DroneController(Robot):
-    """DroneController is the main class to manage the drone's action.
 
-    This class manage the Emitter and Receiver nodes to send and get the states
-    and actions of the drone to the Remote Control.
-    This use the FlightControl to controlate the motors velocity of the drone.
-    """
 
     def __init__(self):
         super(DroneController, self).__init__()
@@ -40,11 +28,9 @@ class DroneController(Robot):
         print('OK')
 
     def _step(self):
-        """Do a Robot.step()."""
         return self.step(self.timestep)
 
     def sync(self):
-        """Synchronize device info with remote control."""
         # retrieve data from drone
         self.len_sensors_data = len(self.drone.get_sensors_info())
         _, angles_data, _, _ = self.drone.get_odometry()
@@ -71,15 +57,6 @@ class DroneController(Robot):
             self.action.nextPacket()
 
     def run(self):
-        """Run controller's main loop.
-
-        Send the variations of the altitude, the roll, pitch, and yaw angles
-        to the drone. Send the current image captured by the drone's
-        camera and get the actions from the Remote Control, once the action
-        (variations of the angles an altitude) is received, the Drone
-        calculates the velocity, and apply it to the 3 different angles and
-        altitude.
-        """
         # devices sync
         self.sync()
         # control loop
