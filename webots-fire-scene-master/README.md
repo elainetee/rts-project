@@ -15,9 +15,3 @@ Finally must execute the sim_controller.py file in CMD or any terminal
 ```
 python sim_controller/sim_controller.py
 ```
-
-#### References
-
-https://github.com/angel-ayala/webots-fire-scene
-
-https://github.com/GunarakulanGunaretnam/fire-detection-system-in-python-opencv
