@@ -9,48 +9,21 @@ from controller import Supervisor
 
 # utils functions
 def bytes2image(buffer, shape=(240, 400, 4)):
-    """Translate a buffered image Camera() node into an RGB channels array.
-    :param bytes buffer: the buffer data of the image
-    :param tuple size: (height, width, channels) of the image
-    """
     array_image = np.frombuffer(buffer, np.uint8).reshape(shape)  # BGRA image
     array_image = array_image[:, :, :3]  # BGR
     return array_image
 
 
 def min_max_norm(x, a=0, b=1, minx=0, maxx=1):
-    """Normalize a x integer in the [a, b] range.
-    :param integer x: Number to be normalized.
-    :param integer a: Low limit. The default is 0.
-    :param integer b: upper limit. The default is 1.
-    :return float, the number normalized.
-    """
     return a + (((x - minx) * (b - a)) / (maxx - minx))
 
 
 def compute_distance(coord1, coord2):
-    """Compute squared Euclidean distance.
-    :param np.array coord1: the first coordinates.
-    :param np.array coord2: the second coordinates.
-    :return np.array: squared difference sum of the coordinates, rounded
-        to 4 decimal points.
-    """
     return np.sqrt(np.sum(np.square(coord1 - coord2))).round(4)
 
 
 # Webots environment controller
 class SimController(Supervisor):
-    """Main class to control the Webots simulation scene.
-    In order to work this class, a Robot node must be present in the Webots
-    scenario with the supervisor option turned on. For this case the Robot
-    node is considered as the RL-agent configured with the Emitter and
-    Receiver nodes in order to get and send the states and actions,
-    respectively, working as the Remote Control of the drone.
-    Additionally, this class is responsible to randomize the fire size and
-    location.
-    Also, consider the implementation of a default keyboard control as human
-    interface for testing purpose.
-    """
 
     def __init__(self, init_altitude=12.):
         super(SimController, self).__init__()
@@ -71,23 +44,18 @@ class SimController(Supervisor):
 
     @property
     def is_running(self):
-        """Get if the simulation is running."""
         return self.SIMULATION_MODE_PAUSE != self.simulationGetMode()
 
     def pause(self):
-        """Pause the Webots's simulation."""
         self.simulationSetMode(self.SIMULATION_MODE_PAUSE)
 
     def play(self):
-        """Start the Webots's simulation in real time mode."""
         self.simulationSetMode(self.SIMULATION_MODE_REAL_TIME)
 
     def play_fast(self):
-        """Start the Webots's simulation in run mode."""
         self.simulationSetMode(self.SIMULATION_MODE_RUN)
 
     def play_faster(self):
-        """Start the Webots's simulation in fast mode."""
         self.simulationSetMode(self.SIMULATION_MODE_FAST)
 
     # @property
@@ -111,7 +79,6 @@ class SimController(Supervisor):
 
     @property
     def drone_lifted(self):
-        """Get if the drone has reached the initial altitude."""
         curr_pos = self.drone_node.getPosition()
         off_pos = np.subtract(curr_pos,
                               self.drone['init_pos'])
@@ -119,7 +86,6 @@ class SimController(Supervisor):
         return off_pos.sum() > self.lift_treshold
 
     def seed(self, seed=None):
-        """Set seed for the numpy.random and WorldInfo node, None default."""
         self.np_random = np.random.RandomState(seed)
         world_node = self.getFromDef('World')
         world_node.getField('randomSeed').setSFInt32(
@@ -127,7 +93,6 @@ class SimController(Supervisor):
         return seed
 
     def set_limits(self):
-        """Get the limits to manipulate the angles and altitude."""
         limits = np.array([np.pi / 12.,      # roll
                            np.pi / 12.,      # pitch
                            np.pi / 360.,     # yaw
@@ -138,14 +103,12 @@ class SimController(Supervisor):
         return self
 
     def init_comms(self):
-        """Initialize the communication nodes."""
         self.action = self.getEmitter('ActionEmitter')  # channel 6
         self.state = self.getReceiver('StateReceiver')  # channel 4
         self.state.enable(self.timestep)
         return self
 
     def init_nodes(self):
-        """Initialize the fire and drone nodes' information."""
         # Flight Area
         area_size = self.getFromDef('FlightArea').getField('size').getSFVec2f()
         area_size = [fs / 2 for fs in area_size]  # size from center
@@ -180,11 +143,6 @@ class SimController(Supervisor):
         return self
 
     def sync(self, altitude=False):
-        """
-        Synchronize device info with the drone.
-        :param bool altitude: Indicate if must synchronize the initial
-            altitude with the drone controller.
-        """
         # Initialize Communication Nodes
         self.init_comms()
         if altitude:  # sync initial drone's alt.
@@ -233,12 +191,6 @@ class SimController(Supervisor):
         return self
 
     def reset_simulation(self):
-        """Reset the Webots simulation.
-        Set the simulation mode with the constant SIMULATION_MODE_PAUSE as
-        defined in the Webots documentation.
-        Reset the fire and drone nodes at the starting point, and restart
-        the controllers simulation.
-        """
         if self.is_running:
             self.state.disable()  # prevent to receive data
             self.fire_node.restartController()
@@ -250,17 +202,10 @@ class SimController(Supervisor):
             self.pause()
 
     def _step(self):
-        """Do a Robot.step(timestep)."""
         self.step(self.timestep)
         
     
     def set_fire_dim(self, fire_height=2., fire_radius=0.5):
-        """
-        Set the FireSmoke Node's height and radius.
-        :param float fire_height: The fire's height, default is 2.
-        :param float fire_radius: The fire's radius, default is 0.5
-        :return float, float: the settled height and radius values.
-        """
         # FireSmoke node fields
         self.fire['set_height'](fire_height)
         self.fire['set_radius'](fire_radius)
@@ -273,14 +218,6 @@ class SimController(Supervisor):
         return fire_height, fire_radius
 
     def set_fire_position(self, fire_pos=None):
-        """
-        Set the FireSmoke Node's position in the scenario.
-        Set a desired node position value or generated a new random one inside
-        the scenario's forest area if no input is given.
-        :param list pos: The [X, Z] position values where locate the node, if
-            no values are given a random one is generated instead.
-            Default is None.
-        """
         fire_radius = self.fire['radius']
         if fire_pos is None:  # randomize position
             fire_pos = self.fire['pos'].copy()  # current position
@@ -302,13 +239,6 @@ class SimController(Supervisor):
         return fire_pos, self.risk_distance
 
     def randomize_fire_position(self):
-        """Randomize the size and position of the FireSmoke node.
-        The size and position has value in meters.
-        The height of the node is [2., 13.] and it radius is [0.5, 3.]
-        The position is directly related to the radius, reducing the 2-axis
-        available space and requiring move up given its height.
-        The position is delimited by the forest area.
-        """
         # randomize dimension
         fire_height, fire_radius = self.set_fire_dim(
             fire_height=self.np_random.uniform(2., 13.),
@@ -325,11 +255,9 @@ class SimController(Supervisor):
         return fire_pos, fire_height, fire_radius, self.risk_distance
 
     def get_drone_pos(self):
-        """Read the current drone position from the node's info."""
         return np.array(self.drone_node.getPosition())
 
     def get_goal_distance(self):
-        """Compute the drone's distance to the fire."""
         fire_position = self.fire['pos'].copy()
         drone_position = self.get_drone_pos()
 
@@ -341,17 +269,11 @@ class SimController(Supervisor):
         return distance
 
     def check_altitude(self, altitude=[11, 75]):
-        """Check if the Drone is outside the altitude limits defined.
-        :param list altitude: optional, The altitude's inferior and superior
-         limits. The default is [11, 75].
-        :return bool: True if the Drone is outside the limits, otherwise False.
-        """
         upper = self.drone_altitude >= altitude[1]
         bottom = self.drone_altitude <= altitude[0]
         return [upper, bottom]
 
     def check_flight_area(self):
-        """Check if the Drone is outside the FlightArea."""
         drone_position = self.get_drone_pos()
 
         # X axis check
@@ -364,26 +286,15 @@ class SimController(Supervisor):
         return [north, south, east, west]
 
     def check_flipped(self, angles):
-        """Check if the Drone was flipped.
-        :param list angles: The Drone's 3D normalized angles.
-        :return bool: True if have the propellers down side.
-        """
         return angles[0] > 0.3
 
-    def check_near_object(self, sensors, threshold=0.01):
-        """Check if the sensors encountered an object near.
-        :param list sensors: The Drone's normalized sensors values.
-        :return bool: True if the value of any sensor is below the threshold.
-        """
+    def check_near_object(self, sensors, threshold=0.01):e threshold.
+        
         object_near = [sensor < threshold for sensor in sensors]
 
         return object_near
 
     def get_state(self):
-        """Read the data sended by the drone's Emitter node.
-        Capture and translate the drones sended data with the Receiver node.
-        This data is interpreted as the drone's state
-        """
         image = np.zeros(self.state_shape)  # blank image
         sensors = np.zeros(self.len_sensors)  # blank sensor data
         angles = np.zeros(self.len_angles)  # blank angles data
@@ -426,12 +337,6 @@ class SimController(Supervisor):
         return image, sensors, angles, north_deg
 
     def take_action(self, action):
-        """Perform an action step to the drone motors.
-        Send the desired value of the angles an altitude to the drone to do a
-        variation in the motors speed the 3 angles and the altitude.
-        :param list action: A 4 float values list with the velocity for the
-            [roll, pitch, yaw, altitude] variations.
-        """
         if len(action) != 4:
             raise ValueError("The action is a list with 4 values with roll, "
                              "pitch, yaw angles and the altitude."
@@ -451,7 +356,6 @@ class SimController(Supervisor):
             self._step()  # step to process the action
 
     def __del__(self):
-        """Stop simulation when is destroyed."""
         self.reset_simulation()
 
 
@@ -459,7 +363,6 @@ if __name__ == '__main__':
     import cv2
 
     def print_control_keys():
-        """Display manual control message."""
         # print("You can control the drone with your computer keyboard:")
         # print("IMPORTANT! The Webots 3D window must be selected to work!")
         # print("- 'up': move forward.")
@@ -474,24 +377,6 @@ if __name__ == '__main__':
         print("Drone start flying")
 
     def run(controller, show=True):
-        """Run controller's main loop.
-        Capture the keyboard and translate into fixed float values to variate
-        the 3 different angles and the altitude, optionally an image captured
-        from the drone's camera can be presented in a new window.
-        The pitch and roll angles are variated in +-pi/12.,
-        the yaw angle in +-pi/360. and the altitude in +-5cm.
-        The control keys are:
-            - ArrowUp:      +pitch
-            - ArrowDown:    -pitch
-            - ArrowLeft:    -roll
-            - ArrowRight:   +roll
-            - W:            +altitude
-            - S:            -altitude
-            - A:            +yaw
-            - D:            +yaw
-            - Q:            EXIT
-        :param bool show: Set if show or not the image from the drone's camera.
-        """
         # keyboard interaction
         print_control_keys()
         kb = controller.getKeyboard()
