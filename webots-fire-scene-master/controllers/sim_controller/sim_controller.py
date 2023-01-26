@@ -534,8 +534,7 @@ if __name__ == '__main__':
                 output = cv2.bitwise_and(image,hsv,mask=mask)
                 no_red = cv2.countNonZero(mask)
                 if int(no_red) >1000:
-                    print("Fire detected at north: {:.2f}".format(
-                        north_deg)
+                    print("Fire detected at "+np.array(controller.drone_node.getPosition()))
                 cv2.imshow("Drone's live view", image)
                 cv2.waitKey(1)
 
