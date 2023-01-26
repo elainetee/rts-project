@@ -1,10 +1,4 @@
-#!/usr/bin/env python3
-# -*- coding: utf-8 -*-
-"""
-Created on Thu May 28 19:19:44 2020
 
-@author: Angel Ayala <angel4ayala [at] gmail.com>
-"""
 
 import struct
 import time
@@ -534,7 +528,8 @@ if __name__ == '__main__':
                 output = cv2.bitwise_and(image,hsv,mask=mask)
                 no_red = cv2.countNonZero(mask)
                 if int(no_red) >1000:
-                    print("Fire detected at "+np.array(controller.drone_node.getPosition()))
+                    print("Fire detected at coordinate ")
+                    print(np.array(controller.drone_node.getPosition()))
                 cv2.imshow("Drone's live view", image)
                 cv2.waitKey(1)
 
